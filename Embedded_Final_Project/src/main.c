@@ -47,3 +47,58 @@ void EXTI0_IRQHandler(void) {
 	//clear pending flag
 	SET_BIT(EXTI->PR, 0);
 }
+
+
+// #include "GPIO.h"
+// #include "GPT.h"
+// #include "GPT_private.h"
+// #include "RCC.h"
+// //#include "Std_Types.h"
+
+
+
+
+
+// int main(void)
+// {
+// 	Rcc_Init();
+//     Rcc_Enable(RCC_GPIOA);
+// 	Gpio_ConfigPin(GPIO_A, 1, GPIO_OUTPUT, GPIO_PUSH_PULL);
+// 	Gpio_WritePin(GPIO_A, 1, LOW);
+// 	Gpio_ConfigPin(GPIO_A, 2, GPIO_OUTPUT, GPIO_PUSH_PULL);
+// 	Gpio_WritePin(GPIO_A, 2, LOW);
+
+// 	GPT_Init();
+
+// 	uint32 counter =0;
+
+// 	    // Main loop
+// 	    while (1)
+// 	    {
+// 	        // Start the timer with a period of 2000 ms
+// 	        GPT_StartTimer(500);
+// 	        // Wait until the timer overflows
+// 	        while (!GPT_CheckTimeIsElapsed());
+// 	        counter++;
+// 	        if ((counter%4) == 0)
+// 	        {
+// 	        	Gpio_WritePin(GPIO_A, 2, HIGH);
+
+// 	        }
+// 	        Gpio_WritePin(GPIO_A, 1, HIGH);
+
+// 	        // Delay for 500 ms
+// 	        GPT_StartTimer(500);
+// 	        while (!GPT_CheckTimeIsElapsed())
+// 	        {
+
+// 	        }
+// 	        Gpio_WritePin(GPIO_A, 1, LOW);
+// 	        Gpio_WritePin(GPIO_A, 2, LOW);
+
+// 	    }
+//     return 0;
+// }
+
+
+
