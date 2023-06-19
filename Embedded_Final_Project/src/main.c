@@ -23,13 +23,13 @@
 #define AMBIENT_LED_PIN          2
 
 
-uint8 door_state,hazard_led_state,ambient_led_state,vehicle_lock;
+uint8 vehicle_state,hazard_led_state,ambient_led_state;
 uint8 anti_theft_flag=0;
-static unsigned long int remainingTime =0;
+//static unsigned long int remainingTime =0;
 
 void default_state(void)
 {
-    door_state 		= LOCKED;
+	vehicle_state= LOCKED;
 
     Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
     Gpio_WritePin(HAZARD_LED_PIN, LED_OFF);
@@ -39,7 +39,7 @@ void default_state(void)
 void door_unlocked(void)
 {
 
-    door_state = UNLOCKED_CLOSED;
+	vehicle_state= UNLOCKED_CLOSED;
 
     Gpio_WritePin(VEHICLE_LED_PIN, LED_ON);   //it should be on
     Gpio_WritePin(HAZARD_LED_PIN, LED_ON);
@@ -61,21 +61,19 @@ void door_unlocked(void)
 
 void door_open(void)
 {
-    Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
-    Gpio_WritePin(HAZARD_LED_PIN,  LED_OFF);
-    Gpio_WritePin(AMBIENT_LED_PIN, LED_OFF);
+    vehicle_state= UNLOCKED_OPEN;
 
-    door_state = UNLOCKED_OPEN;
+    Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
+
 
     Gpio_WritePin(AMBIENT_LED_PIN, LED_ON);
 }
 void anti_theft_lock(void)
 {
-    Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
-    Gpio_WritePin(HAZARD_LED_PIN,  LED_OFF);
-    Gpio_WritePin(AMBIENT_LED_PIN, LED_OFF);
+    vehicle_state= LOCKED;
 
-	door_state = LOCKED;
+    Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
+
 
     for (uint8 i=0;i<3;i++){
         Gpio_WritePin(HAZARD_LED_PIN, LED_ON);
@@ -90,11 +88,9 @@ void anti_theft_lock(void)
 
 void closing_door(void)
 {
-    Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
-    Gpio_WritePin(HAZARD_LED_PIN,  LED_OFF);
-    Gpio_WritePin(AMBIENT_LED_PIN, LED_OFF);
+    vehicle_state= UNLOCKED_CLOSED;
 
-    door_state = UNLOCKED_CLOSED;
+    Gpio_WritePin(AMBIENT_LED_PIN, LED_OFF);
 
     Gpio_WritePin(AMBIENT_LED_PIN, LED_ON);
     GPT_StartTimer(GPT_TICKS_SECOND);
@@ -104,23 +100,19 @@ void closing_door(void)
 
 void locking_door(void)
 {
+    vehicle_state= LOCKED;
+
     Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
-    Gpio_WritePin(HAZARD_LED_PIN,  LED_OFF);
-    Gpio_WritePin(AMBIENT_LED_PIN, LED_OFF);
 
-	door_state = LOCKED;
-
-
-    for (uint8 i=0;i<3;i++){
+    for (uint8 i=0;i<2;i++){
         Gpio_WritePin(HAZARD_LED_PIN, LED_ON);
         GPT_StartTimer(GPT_TICKS_500_MS);
         while (!GPT_CheckTimeIsElapsed());
         Gpio_WritePin(HAZARD_LED_PIN, LED_OFF);
         GPT_StartTimer(GPT_TICKS_500_MS);
         while (!GPT_CheckTimeIsElapsed());
+
     }
-
-
 
 }
 
@@ -164,7 +156,7 @@ int main() {
     door_button_state   = Gpio_ReadPin(4);
 
 
-	if(door_state==LOCKED)
+	if(vehicle_state==LOCKED)
 	{
             if((handle_button_state==BUTTON_PRESSED)&&(handle_button_prev_state==1))
             {//01 -------> door unlock
@@ -176,7 +168,7 @@ int main() {
             }
 
     }
-    else if(door_state==UNLOCKED_CLOSED)
+    else if(vehicle_state==UNLOCKED_CLOSED)
     {
 
     	if((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1))
@@ -190,12 +182,12 @@ int main() {
             	anti_theft_flag=0;
 //                locking_door();
             	//--------------------------------------------- question 4
-            	anti_theft_lock();
+            	locking_door();
 //                handle_button_prev_state=0;
 
             }
     }
-    else if(door_state==UNLOCKED_OPEN){
+    else if(vehicle_state==UNLOCKED_OPEN){
             if((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1))
             {//04 -------> Closing the door
                 closing_door();
