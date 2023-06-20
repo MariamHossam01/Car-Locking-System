@@ -1,3 +1,10 @@
+/*
+ * GPT.h
+ *
+ *  Created on: May 25, 2023
+ *      Author: hp
+ */
+
 #ifndef GPT_H_
 #define GPT_H_
 
@@ -22,5 +29,7 @@ unsigned long int GPT_GetElapsedTime(void);
 //GPT_StartTimer, 0xffffffff if GPT_startTime is not called, 0 if an overflow occurred
 unsigned long int GPT_GetRemainingTime(void);
 
-
+void GPT_StartTimer5(unsigned long int OverFlowTicks);
+unsigned char GPT_CheckTimeIsElapsed5(void);
+void GPT_debouncingTimer(void);
 #endif /* GPT_H_ */

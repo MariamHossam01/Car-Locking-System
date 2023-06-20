@@ -12,11 +12,9 @@
 #include "RCC.h"
 
 
-//#include "stm32f4xx.h"
-
 void GPT_Init(void)
 {
-    // Enable the clock for TIM2
+    // Enable the clock for TIM2,TIM5
 	Rcc_Enable(RCC_TIM2);
 
 
@@ -28,15 +26,36 @@ void GPT_Init(void)
     TIM2->ARR = 0xFFFFFFFF; // max value
     TIM2->CNT = 0x00000000;
     TIM2->SR &= ~0x01;
-
     // clock division = 1
     CLEAR_BIT(TIM2->CR1,8);
     CLEAR_BIT(TIM2->CR1,9);
+    SET_BIT(TIM2->EGR,0);
+
+
+
+    Rcc_Enable(RCC_TIM5);
+    TIM5->PSC = 16000 - 1; // 1 tick is 1 millisecond
+    CLEAR_BIT(TIM5->CR1,4);  // count up
+    TIM5->ARR = 0xFFFFFFFF; // max value
+	TIM5->CNT = 0x00000000;
+	TIM5->SR &= ~0x01;
+	CLEAR_BIT(TIM5->CR1,8);
+	CLEAR_BIT(TIM5->CR1,9);
+	SET_BIT(TIM5->EGR,0);
+
+
+
 }
 
 
 void GPT_StartTimer(unsigned long int OverFlowTicks)
 {
+	//disable timer
+	CLEAR_BIT(TIM2->CR1,0);
+	//counter=0
+	TIM2->CNT = 0;
+	//CLR SR
+    TIM2->SR &= ~0x01;
     // Set the timer period
     TIM2->ARR = OverFlowTicks;
 
@@ -53,7 +72,7 @@ unsigned char GPT_CheckTimeIsElapsed(void)
     if ((TIM2->SR & 0x01) != 0)
     {
         // Clear the overflow flag
-        TIM2->SR &= ~0x01;
+//        TIM2->SR &= ~0x01;
         return 1;
     }
     else
@@ -93,4 +112,72 @@ unsigned long int GPT_GetRemainingTime(void)
     {
         return 0xFFFFFFFF; // GPT_StartTimer is not called or an overflow occurred
     }
+}
+
+
+void GPT_StartTimer5(unsigned long int OverFlowTicks)
+{
+	//disable timer
+	CLEAR_BIT(TIM5->CR1,0);
+	//counter=0
+	TIM5->CNT = 0;
+	//CLR SR
+    TIM5->SR &= ~0x01;
+    // Set the timer period
+    TIM5->ARR = OverFlowTicks;
+
+    // Start the timer
+    TIM5->CR1 |= 0x01;
+
+
+}
+
+unsigned char GPT_CheckTimeIsElapsed5(void)
+{
+    // Check if an overflow occurred
+    if ((TIM5->SR & 0x01) != 0)
+    {
+        // Clear the overflow flag
+//        TIM2->SR &= ~0x01;
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
+void GPT_debouncingTimer(void)
+{
+		//disable timer
+		CLEAR_BIT(TIM5->CR1,0);
+		//counter=0
+		TIM5->CNT = 0;
+		//CLR SR
+	    TIM5->SR &= ~0x01;
+	    // Set the timer period
+	    TIM5->ARR = 100;
+
+	    // Start the timer
+	    TIM5->CR1 |= 0x01;
+
+	// Check if an overflow occurred
+
+	    while((TIM5->SR & 0x01)==0){}
+
+	    TIM5->SR &= ~0x01;
+
+
+//	   if ((TIM5->SR & 0x01) != 0)
+//	   {
+//		   // Clear the overflow flag
+//   //        TIM2->SR &= ~0x01;
+//		   return 1;
+//	   }
+//	   else
+//	   {
+//		   return 0;
+//	   }
+
 }
