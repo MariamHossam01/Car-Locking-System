@@ -24,7 +24,7 @@
 
 
 uint8 vehicle_state=UNLOCKED_CLOSED,hazard_led_state,ambient_led_state;
-uint8 anti_theft_flag=0, action_done_flag=0;
+uint8 anti_theft_flag=0, action_done_flag=0, prev_action=0;
 static unsigned long int remainingTime =0;
 
 void default_state(void)
@@ -140,14 +140,6 @@ void locking_door(void)
 
     Gpio_WritePin(VEHICLE_LED_PIN, LED_OFF);
 
-//    for (uint8 i=0;i<2;i++){
-//        Gpio_WritePin(HAZARD_LED_PIN, LED_ON);
-//        GPT_StartTimer(GPT_TICKS_500_MS);
-//        while (!GPT_CheckTimeIsElapsed());
-//        Gpio_WritePin(HAZARD_LED_PIN, LED_OFF);
-//        GPT_StartTimer(GPT_TICKS_500_MS);
-//        while (!GPT_CheckTimeIsElapsed());
-//    }
     if(GPT_GetElapsedTime()<499)
     {
     	Gpio_WritePin(HAZARD_LED_PIN, LED_ON);
@@ -202,65 +194,117 @@ int main() {
 //--------------------------------------------- question 1
     handle_button_state = Gpio_ReadPin(3);
     door_button_state   = Gpio_ReadPin(4);
-
-//    remainingTime=GPT_GetRemainingTime();
-//    GPT_StartTimer5(DEBOUNCE_TIME_MS);
-//    while (!GPT_CheckTimeIsElapsed5());
     GPT_debouncingTimer();
     handle_button_state_2 = Gpio_ReadPin(3);
     door_button_state_2   = Gpio_ReadPin(4);
 
     if((handle_button_state==handle_button_state_2)&&(door_button_state==door_button_state_2))
     {
-		if(vehicle_state==LOCKED)
-		{
-				if(((handle_button_state==BUTTON_PRESSED)&&(handle_button_prev_state==1))||(action_done_flag==1))
+    	switch(vehicle_state)
+    	{
+    		case LOCKED:
+    		{
+    			if(((handle_button_state==BUTTON_PRESSED)&&(handle_button_prev_state==1))||(action_done_flag==1))
 				{//01 -------> door unlock
-					if(GPT_CheckTimeIsElapsed()&&(action_done_flag==0))  //return 1 if timer isn't started
+
+
+					if((GPT_CheckTimeIsElapsed()&&(action_done_flag==0))||(action_done_flag!=1))  //return 1 if timer isn't started
 					{
-						GPT_StartTimer(2000);
 						action_done_flag=1;
+						GPT_StartTimer(2000);
 					}
 					door_unlocked();
 
 				}
+    			break;
+    		}
+    		case UNLOCKED_CLOSED:
+    		{
 
-		}
-		else if(vehicle_state==UNLOCKED_CLOSED)
-		{
-
-			if(((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1)))
-				{ //02 -------> door is open
-					anti_theft_flag=0;
-					door_open();
-				}
+    			if(((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1)))
+    				{ //02 -------> door is open
+    					anti_theft_flag=0;
+    					door_open();
+    				}
 
 				else if(((handle_button_state==BUTTON_PRESSED)&&(handle_button_prev_state==1))||(action_done_flag==5))
 				{ //05 -------> Locking the door
-					if(GPT_CheckTimeIsElapsed()&&(action_done_flag==0))  //return 1 if timer isn't started
+					if((GPT_CheckTimeIsElapsed()&&(action_done_flag==0))||(action_done_flag!=5))  //return 1 if timer isn't started
 					{
-						GPT_StartTimer(2000);
 						action_done_flag=5;
+						GPT_StartTimer(2000);
 					}
 					locking_door();
 					anti_theft_flag=0;
-
 				}
-		}
-		else if(vehicle_state==UNLOCKED_OPEN){
-				if(((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1))||(action_done_flag==4))
+    			break;
+    		}
+    		case UNLOCKED_OPEN:
+    		{
+    			if(((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1))||(action_done_flag==4))
 				{//04 -------> Closing the door
-					if(GPT_CheckTimeIsElapsed()&&(action_done_flag==0))  //return 1 if timer isn't started
+
+					if((GPT_CheckTimeIsElapsed()&&(action_done_flag==0))||(action_done_flag!=4))  //return 1 if timer isn't started
 					{
-						GPT_StartTimer(1010);
 						action_done_flag=4;
+						GPT_StartTimer(1010);
 					}
 					closing_door();
-	//                door_button_prev_state=0;
-					// start counting 10 seconds
-
 				}
-		}
+    			break;
+    		}
+
+    	}
+
+//		if(vehicle_state==LOCKED)
+//		{
+//				if(((handle_button_state==BUTTON_PRESSED)&&(handle_button_prev_state==1))||(action_done_flag==1))
+//				{//01 -------> door unlock
+//					if(GPT_CheckTimeIsElapsed()&&(action_done_flag==0))  //return 1 if timer isn't started
+//					{
+//						GPT_StartTimer(2000);
+//						action_done_flag=1;
+//					}
+//					door_unlocked();
+//
+//				}
+//
+//		}
+//		else if(vehicle_state==UNLOCKED_CLOSED)
+//		{
+//
+//			if(((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1)))
+//				{ //02 -------> door is open
+//					anti_theft_flag=0;
+//					door_open();
+//				}
+//
+//				else if(((handle_button_state==BUTTON_PRESSED)&&(handle_button_prev_state==1))||(action_done_flag==5))
+//				{ //05 -------> Locking the door
+//					if(GPT_CheckTimeIsElapsed()&&(action_done_flag==0))  //return 1 if timer isn't started
+//					{
+//						GPT_StartTimer(2000);
+//						action_done_flag=5;
+//					}
+//					locking_door();
+//					anti_theft_flag=0;
+//
+//				}
+//		}
+//		else if(vehicle_state==UNLOCKED_OPEN){
+//				if(((door_button_state==BUTTON_PRESSED)&&(door_button_prev_state==1))||(action_done_flag==4))
+//				{//04 -------> Closing the door
+//					if(GPT_CheckTimeIsElapsed()&&(action_done_flag==0))  //return 1 if timer isn't started
+//					{
+//						GPT_StartTimer(1010);
+//						action_done_flag=4;
+//					}
+//					closing_door();
+//	//                door_button_prev_state=0;
+//					// start counting 10 seconds
+//
+//				}
+//		}
 
 
     }

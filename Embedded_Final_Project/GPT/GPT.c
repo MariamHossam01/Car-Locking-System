@@ -11,7 +11,7 @@
 #include "GPT_Private.h"
 #include "RCC.h"
 
-
+static uint8 flag=0;
 void GPT_Init(void)
 {
     // Enable the clock for TIM2,TIM5
@@ -48,8 +48,9 @@ void GPT_Init(void)
 }
 
 
-void GPT_StartTimer(unsigned long int OverFlowTicks)
+void GPT_StartTimer(uint32 OverFlowTicks)
 {
+	flag=1;
 	//disable timer
 	CLEAR_BIT(TIM2->CR1,0);
 	//counter=0
@@ -66,7 +67,7 @@ void GPT_StartTimer(unsigned long int OverFlowTicks)
 }
 
 
-unsigned char GPT_CheckTimeIsElapsed(void)
+uint8 GPT_CheckTimeIsElapsed(void)
 {
     // Check if an overflow occurred
     if ((TIM2->SR & 0x01) != 0)
@@ -82,70 +83,39 @@ unsigned char GPT_CheckTimeIsElapsed(void)
 }
 
 
-unsigned long int GPT_GetElapsedTime(void)
-{
-    // Get the elapsed time
-    uint32 elapsedTime = TIM2->CNT;
-
-    // Check if an overflow occurred
-    if ((TIM2->SR & 0x01) != 0)
-    {
-        return 0xFFFFFFFF; // overflow occurred
-    }
-    else
-    {
-        return elapsedTime;
-    }
-}
-
-
-unsigned long int GPT_GetRemainingTime(void)
-{
-    // Check if the timer is running
-    if ((TIM2->CR1 & 0x01) != 0)
-    {
-        // Get the remaining time
-        uint32 remainingTime = TIM2->ARR - TIM2->CNT;
-        return remainingTime;
-    }
-    else
-    {
-        return 0xFFFFFFFF; // GPT_StartTimer is not called or an overflow occurred
-    }
-}
-
-
-void GPT_StartTimer5(unsigned long int OverFlowTicks)
-{
-	//disable timer
-	CLEAR_BIT(TIM5->CR1,0);
-	//counter=0
-	TIM5->CNT = 0;
-	//CLR SR
-    TIM5->SR &= ~0x01;
-    // Set the timer period
-    TIM5->ARR = OverFlowTicks;
-
-    // Start the timer
-    TIM5->CR1 |= 0x01;
+//uint32 GPT_GetElapsedTime(void)
+//{
+//    // Get the elapsed time
+//    uint32 elapsedTime = TIM2->CNT;
+//
+//    // Check if an overflow occurred
+//    if ((TIM2->SR & 0x01) != 0)
+//    {
+//        return 0xFFFFFFFF; // overflow occurred
+//    }
+//    else
+//    {
+//        return elapsedTime;
+//    }
+//}
+//
+//
+//uint32 GPT_GetRemainingTime(void)
+//{
+//    // Check if the timer is running
+//    if ((TIM2->CR1 & 0x01) != 0)
+//    {
+//        // Get the remaining time
+//        uint32 remainingTime = TIM2->ARR - TIM2->CNT;
+//        return remainingTime;
+//    }
+//    else
+//    {
+//        return 0xFFFFFFFF; // GPT_StartTimer is not called or an overflow occurred
+//    }
+//}
 
 
-}
-
-unsigned char GPT_CheckTimeIsElapsed5(void)
-{
-    // Check if an overflow occurred
-    if ((TIM5->SR & 0x01) != 0)
-    {
-        // Clear the overflow flag
-//        TIM2->SR &= ~0x01;
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
 
 
 void GPT_debouncingTimer(void)
@@ -167,17 +137,49 @@ void GPT_debouncingTimer(void)
 	    while((TIM5->SR & 0x01)==0){}
 
 	    TIM5->SR &= ~0x01;
-
-
-//	   if ((TIM5->SR & 0x01) != 0)
-//	   {
-//		   // Clear the overflow flag
-//   //        TIM2->SR &= ~0x01;
-//		   return 1;
-//	   }
-//	   else
-//	   {
-//		   return 0;
-//	   }
-
 }
+
+uint32 GPT_GetElapsedTime(void)
+{
+    // Get the elapsed time
+    uint32 elapsedTime = TIM2->CNT;
+
+    // Check if an overflow occurred
+    if ((TIM2->SR & 0x01) != 0)
+    {
+        return 0xFFFFFFFF; // overflow occurred
+    }
+    else if((!READ_BIT(TIM2->CR1,0)))
+    {
+    	return 0;
+    }
+    else
+    {
+        return elapsedTime;
+    }
+}
+
+
+uint32 GPT_GetRemainingTime(void)
+{
+    // Check if the timer is running
+    if ((TIM2->CR1 & 0x01) != 0)
+    {
+        // Get the remaining time
+        uint32 remainingTime = TIM2->ARR - TIM2->CNT;
+        return remainingTime;
+    }
+    else if ((!READ_BIT(TIM2->CR1,0)))
+    {
+        return 0xFFFFFFFF; // GPT_StartTimer is not called or an overflow occurred
+    }
+    else
+    {
+    	return 0;
+    }
+}
+
+
+
+
+
