@@ -74,4 +74,3 @@ uint8 Gpio_ReadPin(uint8 PinId) {
 	}
 }
 
-
